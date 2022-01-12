@@ -10,8 +10,7 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.75",
         "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5",
-        "spatie/data-transfer-object": "^3.7"
+        "laravel/tinker": "^2.5"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
@@ -26,7 +25,7 @@
             "App\\": "app/",
             "Modules\\": "moules/",
             "Domains\\": "domains/",
-            "Supports\\": "support",
+            "Support\\": "support",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
