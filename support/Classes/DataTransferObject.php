@@ -4,16 +4,35 @@ namespace Support\Classes;
 
 use ReflectionClass;
 use ReflectionProperty;
-use Illuminate\Support\Str;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Http\Request;
+use Support\Attributes\MapTo;
+use Support\Attributes\RequestName;
 
-class DataTransferObject
+class DataTransferObject implements Arrayable
 {
-    public function __construct(array $args)
+    public function __construct(array | Request $args)
     {
         $class = new ReflectionClass($this);
+        $properties = $class->getProperties(ReflectionProperty::IS_PUBLIC);
 
-        foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            $this->{$property->name} = $args[$property->name] ?? $this->{$property->name} ?? null;
+        if (is_array($args)) {
+            foreach ($properties as $property) {
+                $this->{$property->name} = $args[$property->name] ?? $this->{$property->name} ?? null;
+            }
+        }
+
+        if (is_object($args)) {
+            foreach ($properties as $property) {
+                $mapToAttribute = $property->getAttributes(RequestName::class);
+
+                if ($mapToAttribute) {
+                    $requestName = $mapToAttribute[0]->newInstance()->name;
+                    $this->{$property->name} = $args->{$requestName} ?? $this->{$property->name} ?? null;
+                } else {
+                    $this->{$property->name} = $this->{$property->name} ?? null;
+                }
+            }
         }
     }
 
@@ -23,19 +42,10 @@ class DataTransferObject
         $class = new ReflectionClass($this);
 
         foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            $data[$property->name] = $this->{$property->name};
-        }
+            $mapToAttribute = $property->getAttributes(MapTo::class);
+            $name = count($mapToAttribute) ? $mapToAttribute[0]->newInstance()->name : $property->getName();
 
-        return $data;
-    }
-
-    public function toSnake()
-    {
-        $data = [];
-        $class = new ReflectionClass($this);
-
-        foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            $data[Str::snake($property->name)] = $this->{$property->name};
+            $data[$name] = $this->{$property->name};
         }
 
         return $data;
